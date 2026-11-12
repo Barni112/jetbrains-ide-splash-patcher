@@ -40,6 +40,7 @@ class GuiTests(unittest.TestCase):
                 root.update()
                 self.assertEqual(len(app.changes), 2)
                 self.assertEqual(len(app.photos), 2)
+                self.assertLessEqual(root.winfo_rooty() + root.winfo_height(), root.winfo_screenheight() - 40)
                 for widget in app.controls:
                     self.assertLessEqual(widget.winfo_rooty() + widget.winfo_height(),
                                          root.winfo_rooty() + root.winfo_height())

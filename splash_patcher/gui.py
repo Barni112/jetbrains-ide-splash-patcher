@@ -20,8 +20,8 @@ class App:
         self.root = root
         root.title('JetBrains IDE Splash Patcher')
         width = min(1200, root.winfo_screenwidth() - 40)
-        height = min(820, root.winfo_screenheight() - 90)
-        root.geometry(f'{width}x{height}')
+        height = min(820, root.winfo_screenheight() - 110)
+        root.geometry(f'{width}x{height}+10+10')
         root.minsize(min(960, width), min(640, height))
         self.ide = None
         self.resources = []
