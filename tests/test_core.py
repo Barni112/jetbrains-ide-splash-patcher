@@ -87,6 +87,28 @@ class CoreTests(unittest.TestCase):
                         with Image.open(io.BytesIO(b.read('art/logo.png'))) as im:
                             self.assertEqual(im.getpixel((0, 0)), (0, 0, 255))
 
+    def test_descriptor_populated_local_fields_are_updated(self):
+        create_jar(self.jar, descriptor=True)
+        data = bytearray(self.jar.read_bytes())
+        with zipfile.ZipFile(self.jar) as archive:
+            info = archive.getinfo('art/logo.png')
+        struct.pack_into('<III', data, info.header_offset + 14,
+                         info.CRC, info.compress_size, info.file_size)
+        self.jar.write_bytes(data)
+        output = self.root/'descriptor.jar'
+        patch_jar(self.jar, output, self.changes['lib/art.jar'])
+        with zipfile.ZipFile(output) as archive:
+            after = archive.getinfo('art/logo.png')
+            self.assertEqual(struct.unpack_from('<III', output.read_bytes(), after.header_offset+14),
+                             (after.CRC, after.compress_size, after.file_size))
+
+    def test_force_zip64_target_refused(self):
+        with zipfile.ZipFile(self.jar, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            with archive.open('art/logo.png', 'w', force_zip64=True) as stream:
+                stream.write(png())
+        with self.assertRaisesRegex(ValueError, 'ZIP64'):
+            patch_jar(self.jar, self.root/'zip64.jar', self.changes['lib/art.jar'])
+
     def test_raw_changes_are_limited_to_selected_payload_and_metadata(self):
         output = self.root / 'out.jar'
         before = self.jar.read_bytes()

@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import struct
-import tempfile
 import zipfile
 import zlib
 
@@ -128,6 +127,16 @@ def patch_entry(data: bytearray, info: zipfile.ZipInfo, cd_pos: int, png: bytes,
         raise ValueError(f'{info.filename}: local/central ZIP metadata mismatch')
     name_len, extra_len = struct.unpack_from('<HH', data, local + 26)
     start = local + 30 + name_len + extra_len
+    extra_at = local + 30 + name_len
+    while extra_at < start:
+        if extra_at + 4 > start:
+            raise ValueError('Truncated ZIP extra field')
+        field_id, field_size = struct.unpack_from('<HH', data, extra_at)
+        if field_id == 1:
+            raise ValueError(f'{info.filename}: ZIP64 not supported')
+        extra_at += 4 + field_size
+        if extra_at > start:
+            raise ValueError('Truncated ZIP extra field')
     raw_name = data[local+30:local+30+name_len]
     encoding = 'utf-8' if info.flag_bits & 0x800 else 'cp437'
     if raw_name.decode(encoding) != info.filename:
@@ -155,7 +164,14 @@ def patch_entry(data: bytearray, info: zipfile.ZipInfo, cd_pos: int, png: bytes,
         if struct.unpack_from('<III', data, position) != (info.CRC, info.compress_size, info.file_size):
             raise ValueError(f'{info.filename}: ZIP data descriptor mismatch')
         struct.pack_into('<III', data, position, crc, info.compress_size, len(padded))
-        # A descriptor entry may have zeroes in local CRC/size fields; preserve them.
+        # Preserve zero placeholders, but update any populated local fields.
+        old_fields = struct.unpack_from('<III', data, local + 14)
+        expected_fields = (info.CRC, info.compress_size, info.file_size)
+        new_fields = (crc, info.compress_size, len(padded))
+        if any(old not in (0, expected) for old, expected in zip(old_fields, expected_fields)):
+            raise ValueError(f'{info.filename}: invalid descriptor local metadata')
+        struct.pack_into('<III', data, local + 14,
+                         *(new if old else 0 for old, new in zip(old_fields, new_fields)))
     else:
         if struct.unpack_from('<III', data, local + 14) != (info.CRC, info.compress_size, info.file_size):
             raise ValueError(f'{info.filename}: local ZIP metadata mismatch')
