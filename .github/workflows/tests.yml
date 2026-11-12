@@ -12,6 +12,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python: ['3.11', '3.13']
     runs-on: ${{ matrix.os }}
+    env:
+      TK_SCREENSHOT: test-artifacts/gui.png
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,3 +26,10 @@ jobs:
       - name: Tests including Tk GUI (Windows)
         if: runner.os == 'Windows'
         run: python -m unittest discover -s tests -v
+      - name: GUI screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-${{ matrix.os }}-${{ matrix.python }}
+          path: test-artifacts/gui.png
+          if-no-files-found: ignore

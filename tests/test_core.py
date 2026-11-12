@@ -267,6 +267,9 @@ class CoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'checksum'):
             execute(plan)
         self.assertEqual(before, self.jar.read_bytes())
+        # Recovery only needs the verified pre-operation snapshot.
+        execute(self.manager.recover(), recover=True)
+        self.assertFalse(self.manager.pending.exists())
 
     def test_destination_escape_refused(self):
         outside = self.root/'outside.jar'

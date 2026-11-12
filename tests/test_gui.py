@@ -7,7 +7,7 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image, ImageGrab
 
 from splash_patcher.discovery import Installation, scan
 from splash_patcher.gui import App
@@ -39,6 +39,10 @@ class GuiTests(unittest.TestCase):
                 root.update()
                 self.assertEqual(len(app.changes), 2)
                 self.assertEqual(len(app.photos), 2)
+                if os.environ.get('TK_SCREENSHOT'):
+                    destination = Path(os.environ['TK_SCREENSHOT'])
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    ImageGrab.grab().save(destination)
                 for (jar,entry), data in app.changes.items():
                     with Image.open(io.BytesIO(data)) as im:
                         self.assertEqual(im.size, (160,100) if '@2x' in entry else (80,50))

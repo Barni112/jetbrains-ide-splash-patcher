@@ -86,8 +86,8 @@ def workspace_lock(folder: Path):
     """An OS lock releases automatically if either process crashes."""
     folder.mkdir(parents=True, exist_ok=True)
     with (folder / '.lock').open('a+b') as f:
-        f.seek(0)
-        if not f.read(1):
+        # Do not read a byte that another Windows process may have locked.
+        if f.seek(0, os.SEEK_END) == 0:
             f.write(b'0')
             f.flush()
         f.seek(0)
@@ -141,7 +141,6 @@ class Manager:
                 raise ValueError('No queued replacements or backups to restore')
             operation = self.folder / 'operations' / uuid.uuid4().hex
             operation.mkdir(parents=True)
-            before_state = json.loads(json.dumps(state))
             items = []
             for index, relative in enumerate(selected):
                 target = jar_path(self.ide.root, relative)
@@ -246,7 +245,7 @@ def execute(plan_path: Path, recover: bool = False) -> None:
             raise ValueError('Duplicate JAR destinations')
         for item in items:
             target = jar_path(ide.root, item['relative'])
-            for field in ('before', 'after'):
+            for field in (('before',) if recover else ('before', 'after')):
                 file = Path(item[field]).resolve(strict=True)
                 if not file.is_relative_to(plan_path.parent) or digest(file) != item[field + '_sha256']:
                     raise ValueError('Staged file checksum or path changed')
