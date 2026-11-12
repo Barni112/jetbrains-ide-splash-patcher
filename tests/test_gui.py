@@ -41,7 +41,9 @@ class GuiTests(unittest.TestCase):
                 self.assertEqual(len(app.changes), 2)
                 self.assertEqual(len(app.photos), 2)
                 self.assertLessEqual(root.winfo_rooty() + root.winfo_height(), root.winfo_screenheight() - 40)
-                for widget in app.controls:
+                for widget in [*app.controls, app.log]:
+                    self.assertTrue(widget.winfo_ismapped(), widget)
+                    self.assertGreaterEqual(widget.winfo_height(), widget.winfo_reqheight(), widget)
                     self.assertLessEqual(widget.winfo_rooty() + widget.winfo_height(),
                                          root.winfo_rooty() + root.winfo_height())
                 if os.environ.get('TK_SCREENSHOT'):
