@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jetbrains-ide-splash-patcher"
+version = "0.1.0"
+description = "Browse, back up, replace, and restore JetBrains IDE splash artwork"
+requires-python = ">=3.11"
+dependencies = ["Pillow>=10.4", "psutil>=5.9"]
+
+[project.gui-scripts]
+jetbrains-splash = "splash_patcher.gui:main"
+
+[tool.setuptools.packages.find]
+include = ["splash_patcher*"]
