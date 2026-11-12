@@ -19,8 +19,10 @@ class App:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title('JetBrains IDE Splash Patcher')
-        root.geometry('1200x820')
-        root.minsize(960, 700)
+        width = min(1200, root.winfo_screenwidth() - 40)
+        height = min(820, root.winfo_screenheight() - 90)
+        root.geometry(f'{width}x{height}')
+        root.minsize(min(960, width), min(640, height))
         self.ide = None
         self.resources = []
         self.nodes = {}
@@ -38,7 +40,7 @@ class App:
         self.selection_text = tk.StringVar(value='Select an image or a standard / HiDPI pair.')
         self.count = tk.StringVar(value='0 replacements queued')
         self.controls = []
-        outer = ttk.Frame(root, padding=16)
+        outer = ttk.Frame(root, padding=12)
         outer.pack(fill='both', expand=True)
         ttk.Label(outer, text='JetBrains IDE Splash Patcher', font=('Segoe UI', 19, 'bold')).pack(anchor='w')
         ttk.Label(outer, text='Browse artwork • Preview replacements • Back up, apply, and restore').pack(anchor='w', pady=(2, 14))
@@ -81,8 +83,8 @@ class App:
         previews.rowconfigure(1, weight=1)
         ttk.Label(previews, text='Currently installed', font=('Segoe UI', 11, 'bold')).grid(row=0, column=0, sticky='w')
         ttk.Label(previews, text='Queued replacement', font=('Segoe UI', 11, 'bold')).grid(row=0, column=1, sticky='w')
-        self.current_canvas = tk.Canvas(previews, background='#20252b', highlightthickness=0, width=260, height=260)
-        self.replacement_canvas = tk.Canvas(previews, background='#20252b', highlightthickness=0, width=260, height=260)
+        self.current_canvas = tk.Canvas(previews, background='#20252b', highlightthickness=0, width=260, height=140)
+        self.replacement_canvas = tk.Canvas(previews, background='#20252b', highlightthickness=0, width=260, height=140)
         self.current_canvas.grid(row=1, column=0, sticky='nsew', padx=(0, 5), pady=8)
         self.replacement_canvas.grid(row=1, column=1, sticky='nsew', padx=(5, 0), pady=8)
         for canvas in (self.current_canvas, self.replacement_canvas):
@@ -95,7 +97,7 @@ class App:
         self.controls.append(mode)
         self.button(options, 'Choose replacement…', self.choose_replacement).pack(side='left')
         self.button(right, 'Remove selected from queue', self.remove_selected).pack(anchor='w', pady=4)
-        ttk.Label(right, text='Select a pair to replace both sizes, or a child image to replace one.\nCrop fills the frame; Fit adds black margins. Resize applies when choosing an image.',
+        ttk.Label(right, text='Select a pair for both sizes, or a child for one.\nChoose Crop / Fit before selecting replacement artwork.',
                   wraplength=520).pack(anchor='w', pady=8)
         ttk.Label(right, textvariable=self.count, font=('Segoe UI', 11, 'bold')).pack(anchor='w', pady=8)
         actions = ttk.Frame(outer)
@@ -104,7 +106,7 @@ class App:
         self.button(actions, 'Recover interrupted operation', self.recover).pack(side='left', padx=8)
         self.button(actions, 'Clear splash cache', self.cache_only).pack(side='left')
         self.button(actions, 'Review & apply…', self.apply).pack(side='right')
-        self.log = tk.Text(outer, height=5, wrap='word', state='disabled', font=('Consolas', 9))
+        self.log = tk.Text(outer, height=3, wrap='word', state='disabled', font=('Consolas', 9))
         self.log.pack(fill='x')
         ttk.Label(outer, textvariable=self.status, wraplength=1100).pack(anchor='w', pady=(7, 0))
         root.protocol('WM_DELETE_WINDOW', self.close)

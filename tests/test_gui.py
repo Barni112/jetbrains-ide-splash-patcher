@@ -28,6 +28,7 @@ class GuiTests(unittest.TestCase):
             try:
                 app = App(root)
                 app.ide = Installation.load(base)
+                app.path.set(str(base))
                 app.scanned(scan(app.ide))
                 root.update()
                 pair_node = next(node for node, resources in app.nodes.items() if len(resources) == 2)
@@ -39,6 +40,9 @@ class GuiTests(unittest.TestCase):
                 root.update()
                 self.assertEqual(len(app.changes), 2)
                 self.assertEqual(len(app.photos), 2)
+                for widget in app.controls:
+                    self.assertLessEqual(widget.winfo_rooty() + widget.winfo_height(),
+                                         root.winfo_rooty() + root.winfo_height())
                 if os.environ.get('TK_SCREENSHOT'):
                     destination = Path(os.environ['TK_SCREENSHOT'])
                     destination.parent.mkdir(parents=True, exist_ok=True)
